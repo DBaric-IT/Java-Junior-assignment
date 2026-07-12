@@ -8,8 +8,11 @@ import org.springframework.data.annotation.AccessType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 
 @Data
+@Table("ORDERS")
 @AccessType(AccessType.Type.PROPERTY)
 public class Order {
 	@Id
@@ -19,7 +22,7 @@ public class Order {
 	@Transient
 	private OrderStatus orderStatus;
 
-	@Column("order_status")
+	@Column("ORDER_STATUS")
 	public String getStringOrderStatus() {
 		return this.orderStatus.toString();
 	}
@@ -33,7 +36,7 @@ public class Order {
 	@Transient
 	private PaymentOption paymentOption;
 
-	@Column("payment_option")
+	@Column("PAYMENT_OPTION")
 	public String getStringPaymentOption() {
 		return this.paymentOption.toString();
 	}

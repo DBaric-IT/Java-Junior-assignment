@@ -1,0 +1,50 @@
+package hr.abysalto.hiring.api.junior.controller;
+
+import hr.abysalto.hiring.api.junior.components.DatabaseInitializer;
+import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
+import hr.abysalto.hiring.api.junior.manager.OrderManager;
+import hr.abysalto.hiring.api.junior.model.Order;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * REST kontroler za narudzbe. @RestController = radi s JSON-om (za razliku od
+ * BuyerControllera koji vraca HTML). Najlakse se testira kroz Swagger UI.
+ */
+@Tag(name = "Orders", description = "upravljanje narudzbama restorana")
+@RestController
+@RequestMapping("order")
+public class OrderController {
+
+    @Autowired
+    private OrderManager orderManager;
+    @Autowired
+    private DatabaseInitializer databaseInitializer;
+
+    @Operation(summary = "Dodaj novu narudzbu")
+    @PostMapping("/")
+    public ResponseEntity<?> create(@RequestBody CreateOrderRequest request) {
+        // Tablice se kreiraju tek na /init-data/, pa bez toga nema smisla spremati.
+        if (!this.databaseInitializer.isDataInitialized()) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
+        }
+        try {
+            Order created = this.orderManager.createOrder(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created); // 201 = uspjesno stvoreno
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());       // 400 = krivi unos
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(ex.getMessage()); // 500 = neocekivano
+        }
+    }
+}
