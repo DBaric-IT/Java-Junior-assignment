@@ -3,6 +3,7 @@ package hr.abysalto.hiring.api.junior.controller;
 import hr.abysalto.hiring.api.junior.components.DatabaseInitializer;
 import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
 import hr.abysalto.hiring.api.junior.dto.OrderResponse;
+import hr.abysalto.hiring.api.junior.dto.OrderTotalResponse;
 import hr.abysalto.hiring.api.junior.dto.UpdateStatusRequest;
 import hr.abysalto.hiring.api.junior.manager.OrderManager;
 import hr.abysalto.hiring.api.junior.model.Order;
@@ -101,5 +102,22 @@ public class OrderController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body(ex.getMessage());
         }
+    }
+
+    @Operation(summary = "Izracunaj ukupni iznos racuna narudzbe")
+    @GetMapping("/{orderNr}/total")
+    public ResponseEntity<?> getTotal(@PathVariable("orderNr") Long orderNr) {
+        if (!this.databaseInitializer.isDataInitialized()) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
+        }
+        OrderTotalResponse total = this.orderManager.getOrderTotal(orderNr);
+        if (total == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Narudzba " + orderNr + " ne postoji");
+        }
+        return ResponseEntity.ok(total);
     }
 }

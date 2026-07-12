@@ -5,10 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
-import hr.abysalto.hiring.api.junior.dto.OrderItemRequest;
-import hr.abysalto.hiring.api.junior.dto.OrderItemResponse;
-import hr.abysalto.hiring.api.junior.dto.OrderResponse;
+import hr.abysalto.hiring.api.junior.dto.*;
 import hr.abysalto.hiring.api.junior.model.*;
 import hr.abysalto.hiring.api.junior.repository.BuyerAddressRepository;
 import hr.abysalto.hiring.api.junior.repository.BuyerRepository;
@@ -148,6 +145,27 @@ public class OrderManagerImpl implements OrderManager {
         }
         response.setItems(itemResponses);
 
+        return response;
+    }
+
+    @Override
+    public OrderTotalResponse getOrderTotal(Long orderNr) {
+        Order order = this.orderRepository.findById(orderNr).orElse(null);
+        if (order == null) {
+            return null;
+        }
+        // Iznos NAMJERNO racunamo ponovno iz stvarnih stavki (a ne citamo spremljeni
+        // total_price) - tako je uvijek tocan, cak i da se stavke naknadno mijenjaju.
+        List<OrderItem> items = this.orderItemRepository.findByOrderNr(orderNr);
+        BigDecimal total = BigDecimal.ZERO;
+        for (OrderItem item : items) {
+            total = total.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        OrderTotalResponse response = new OrderTotalResponse();
+        response.setOrderNr(orderNr);
+        response.setTotalPrice(total);
+        response.setCurrency(order.getCurrency());
         return response;
     }
 
