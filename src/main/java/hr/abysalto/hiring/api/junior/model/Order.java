@@ -43,8 +43,8 @@ public class Order {
 	}
 
 	private Long deliveryAddressId;
-	//	private BuyerAddress deliveryAddress;
 	private String contactNumber;
+	private String note; //dodao ja - u kosturu je nedostajala
 	private String currency;
 	private BigDecimal totalPrice;
 }
