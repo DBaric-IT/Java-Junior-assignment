@@ -2,14 +2,16 @@ package hr.abysalto.hiring.api.junior.manager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
 import hr.abysalto.hiring.api.junior.dto.OrderItemRequest;
-import hr.abysalto.hiring.api.junior.model.Order;
-import hr.abysalto.hiring.api.junior.model.OrderItem;
-import hr.abysalto.hiring.api.junior.model.OrderStatus;
-import hr.abysalto.hiring.api.junior.model.PaymentOption;
+import hr.abysalto.hiring.api.junior.dto.OrderItemResponse;
+import hr.abysalto.hiring.api.junior.dto.OrderResponse;
+import hr.abysalto.hiring.api.junior.model.*;
+import hr.abysalto.hiring.api.junior.repository.BuyerAddressRepository;
+import hr.abysalto.hiring.api.junior.repository.BuyerRepository;
 import hr.abysalto.hiring.api.junior.repository.OrderItemRepository;
 import hr.abysalto.hiring.api.junior.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,11 @@ public class OrderManagerImpl implements OrderManager {
     private OrderRepository orderRepository;
     @Autowired
     private OrderItemRepository orderItemRepository;
+    // Trebaju nam da kod pregleda dohvatimo ime kupca i adresu dostave.
+    @Autowired
+    private BuyerRepository buyerRepository;
+    @Autowired
+    private BuyerAddressRepository buyerAddressRepository;
 
     @Override
     public Order createOrder(CreateOrderRequest request) {
@@ -61,6 +68,68 @@ public class OrderManagerImpl implements OrderManager {
         }
 
         return savedOrder;
+    }
+
+    @Override
+    public List<OrderResponse> getAllOrders() {
+        List<OrderResponse> result = new ArrayList<>();
+        // findAll() vrati sve narudzbe; svaku pretvorimo u lijepi oblik.
+        for (Order order : this.orderRepository.findAll()) {
+            result.add(mapToResponse(order));
+        }
+        return result;
+    }
+
+    @Override
+    public OrderResponse getOrderByNr(Long orderNr) {
+        // findById vrati Optional; ako narudzba ne postoji -> null (kontroler -> 404)
+        Order order = this.orderRepository.findById(orderNr).orElse(null);
+        if (order == null) {
+            return null;
+        }
+        return mapToResponse(order);
+    }
+
+    /**
+     * Pretvara Order (iz baze) u OrderResponse (lijepi oblik).
+     * Spaja podatke iz vise tablica: ime kupca (buyer), adresu (buyer_address)
+     * i stavke (order_item).
+     */
+    private OrderResponse mapToResponse(Order order) {
+        OrderResponse response = new OrderResponse();
+        response.setOrderNr(order.getOrderNr());
+
+        // ime kupca iz tablice buyer
+        Buyer buyer = this.buyerRepository.findById(order.getBuyerId()).orElse(null);
+        response.setBuyerName(buyer != null ? buyer.getFirstName() + " " + buyer.getLastName() : "(nepoznat kupac)");
+
+        // adresa iz tablice buyer_address
+        BuyerAddress address = this.buyerAddressRepository.findById(order.getDeliveryAddressId()).orElse(null);
+        response.setDeliveryAddress(address != null
+                ? address.getCity() + ", " + address.getStreet() + " " + address.getHomeNumber()
+                : "(nepoznata adresa)");
+
+        response.setStatus(order.getOrderStatus() != null ? order.getOrderStatus().toString() : null);
+        response.setPaymentOption(order.getPaymentOption() != null ? order.getPaymentOption().toString() : null);
+        response.setOrderTime(order.getOrderTime());
+        response.setContactNumber(order.getContactNumber());
+        response.setNote(order.getNote());
+        response.setCurrency(order.getCurrency());
+        response.setTotalPrice(order.getTotalPrice());
+
+        // stavke te narudzbe
+        List<OrderItemResponse> itemResponses = new ArrayList<>();
+        for (OrderItem item : this.orderItemRepository.findByOrderNr(order.getOrderNr())) {
+            OrderItemResponse itemResponse = new OrderItemResponse();
+            itemResponse.setItemNr(item.getItemNr());
+            itemResponse.setName(item.getName());
+            itemResponse.setQuantity(item.getQuantity());
+            itemResponse.setPrice(item.getPrice());
+            itemResponses.add(itemResponse);
+        }
+        response.setItems(itemResponses);
+
+        return response;
     }
 
     /**

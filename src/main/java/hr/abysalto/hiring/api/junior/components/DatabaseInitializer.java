@@ -51,7 +51,7 @@ public class DatabaseInitializer {
 				 contact_number varchar(100) NULL,
 				 note varchar(100) NULL,
 				 currency varchar(50) NULL,
-				 total_price decimal,
+				 total_price decimal(10,2),
 				 CONSTRAINT FK_order_to_buyer FOREIGN KEY (buyer_id) REFERENCES buyer (buyer_id),
 				 CONSTRAINT FK_order_to_delivery_address FOREIGN KEY (delivery_address_id) REFERENCES buyer_address (buyer_address_id)
 			 );
@@ -64,7 +64,7 @@ public class DatabaseInitializer {
 				 item_nr smallint NOT NULL,
 				 name varchar(100) NOT NULL,
 				 quantity smallint NOT NULL,
-				 price decimal,
+				 price decimal(10,2),
 				 CONSTRAINT UC_order_items UNIQUE (order_item_id, order_nr),
 				 CONSTRAINT FK_order_item_to_order FOREIGN KEY (order_nr) REFERENCES orders (order_nr)
 			 );

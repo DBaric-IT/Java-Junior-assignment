@@ -2,6 +2,7 @@ package hr.abysalto.hiring.api.junior.controller;
 
 import hr.abysalto.hiring.api.junior.components.DatabaseInitializer;
 import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
+import hr.abysalto.hiring.api.junior.dto.OrderResponse;
 import hr.abysalto.hiring.api.junior.manager.OrderManager;
 import hr.abysalto.hiring.api.junior.model.Order;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * REST kontroler za narudzbe. @RestController = radi s JSON-om (za razliku od
@@ -46,5 +44,37 @@ public class OrderController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body(ex.getMessage()); // 500 = neocekivano
         }
+    }
+
+    @Operation(summary = "Dohvati sve narudzbe")
+    @GetMapping("/")
+    public ResponseEntity<?> getAll() {
+        if (!this.databaseInitializer.isDataInitialized()) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
+        }
+        try {
+            return ResponseEntity.ok(this.orderManager.getAllOrders());
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(ex.getMessage());
+        }
+    }
+
+    @Operation(summary = "Dohvati jednu narudzbu po broju")
+    @GetMapping("/{orderNr}")
+    public ResponseEntity<?> getOne(@PathVariable("orderNr") Long orderNr) {
+        if (!this.databaseInitializer.isDataInitialized()) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
+        }
+        OrderResponse order = this.orderManager.getOrderByNr(orderNr);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Narudzba " + orderNr + " ne postoji");
+        }
+        return ResponseEntity.ok(order);
     }
 }
