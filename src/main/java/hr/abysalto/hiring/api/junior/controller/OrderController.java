@@ -48,16 +48,16 @@ public class OrderController {
         }
     }
 
-    @Operation(summary = "Dohvati sve narudzbe")
+    @Operation(summary = "Dohvati sve narudzbe (opcionalno ?sort=asc|desc po iznosu)")
     @GetMapping("/")
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAll(@RequestParam(name = "sort", required = false) String sort) {
         if (!this.databaseInitializer.isDataInitialized()) {
             return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
         }
         try {
-            return ResponseEntity.ok(this.orderManager.getAllOrders());
+            return ResponseEntity.ok(this.orderManager.getAllOrders(sort));
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body(ex.getMessage());
         }

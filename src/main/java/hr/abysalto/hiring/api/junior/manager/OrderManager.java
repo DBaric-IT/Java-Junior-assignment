@@ -12,8 +12,8 @@ public interface OrderManager {
     // Zadatak 2
     Order createOrder(CreateOrderRequest request);
 
-    // Zadatak 3: pregled svih narudzbi
-    List<OrderResponse> getAllOrders();
+    // Zadatak 3 + 6: pregled svih narudzbi; sort = "asc"/"desc" po iznosu (ili null = bez sortiranja)
+    List<OrderResponse> getAllOrders(String sort);
 
     // Zadatak 3: pregled jedne narudzbe po broju; null ako ne postoji
     OrderResponse getOrderByNr(Long orderNr);
@@ -23,4 +23,5 @@ public interface OrderManager {
 
     // Zadatak 5: izracun ukupnog iznosa racuna (iz stavki); null ako narudzba ne postoji
     OrderTotalResponse getOrderTotal(Long orderNr);
+
 }

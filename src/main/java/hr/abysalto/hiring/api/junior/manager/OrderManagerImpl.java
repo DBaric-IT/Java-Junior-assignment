@@ -3,6 +3,7 @@ package hr.abysalto.hiring.api.junior.manager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import hr.abysalto.hiring.api.junior.dto.*;
@@ -68,12 +69,20 @@ public class OrderManagerImpl implements OrderManager {
     }
 
     @Override
-    public List<OrderResponse> getAllOrders() {
+    public List<OrderResponse> getAllOrders(String sort) {
         List<OrderResponse> result = new ArrayList<>();
-        // findAll() vrati sve narudzbe; svaku pretvorimo u lijepi oblik.
         for (Order order : this.orderRepository.findAll()) {
             result.add(mapToResponse(order));
         }
+
+        // Zadatak 6: sortiranje po ukupnom iznosu, ako je trazeno.
+        // (Za jako velike kolicine podataka bilo bi bolje sortirati u SQL-u preko ORDER BY.)
+        if ("asc".equalsIgnoreCase(sort)) {
+            result.sort(Comparator.comparing(OrderResponse::getTotalPrice));
+        } else if ("desc".equalsIgnoreCase(sort)) {
+            result.sort(Comparator.comparing(OrderResponse::getTotalPrice).reversed());
+        }
+
         return result;
     }
 
