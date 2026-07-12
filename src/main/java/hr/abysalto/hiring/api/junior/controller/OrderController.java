@@ -3,6 +3,7 @@ package hr.abysalto.hiring.api.junior.controller;
 import hr.abysalto.hiring.api.junior.components.DatabaseInitializer;
 import hr.abysalto.hiring.api.junior.dto.CreateOrderRequest;
 import hr.abysalto.hiring.api.junior.dto.OrderResponse;
+import hr.abysalto.hiring.api.junior.dto.UpdateStatusRequest;
 import hr.abysalto.hiring.api.junior.manager.OrderManager;
 import hr.abysalto.hiring.api.junior.model.Order;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,5 +77,29 @@ public class OrderController {
                     .body("Narudzba " + orderNr + " ne postoji");
         }
         return ResponseEntity.ok(order);
+    }
+
+    @Operation(summary = "Promijeni status narudzbe")
+    @PatchMapping("/{orderNr}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable("orderNr") Long orderNr,
+                                          @RequestBody UpdateStatusRequest request) {
+        if (!this.databaseInitializer.isDataInitialized()) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Baza nije inicijalizirana. Prvo pozovi POST /init-data/");
+        }
+        try {
+            OrderResponse updated = this.orderManager.updateStatus(orderNr, request.getStatus());
+            if (updated == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body("Narudzba " + orderNr + " ne postoji");
+            }
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(ex.getMessage());
+        }
     }
 }

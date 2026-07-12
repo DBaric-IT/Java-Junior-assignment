@@ -90,6 +90,25 @@ public class OrderManagerImpl implements OrderManager {
         return mapToResponse(order);
     }
 
+    @Override
+    public OrderResponse updateStatus(Long orderNr, String status) {
+        // 1) nadji narudzbu; ako ne postoji -> null (kontroler -> 404)
+        Order order = this.orderRepository.findById(orderNr).orElse(null);
+        if (order == null) {
+            return null;
+        }
+        // 2) tekst -> enum; ako je nepoznat -> greska (kontroler -> 400)
+        OrderStatus newStatus = OrderStatus.fromString(status);
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Nepoznat status: " + status
+                    + " (dozvoljeno: WAITING_FOR_CONFIRMATION, PREPARING, DONE)");
+        }
+        // 3) postavi novi status i spremi (save() nad postojecim orderNr radi UPDATE)
+        order.setOrderStatus(newStatus);
+        this.orderRepository.save(order);
+        return mapToResponse(order);
+    }
+
     /**
      * Pretvara Order (iz baze) u OrderResponse (lijepi oblik).
      * Spaja podatke iz vise tablica: ime kupca (buyer), adresu (buyer_address)

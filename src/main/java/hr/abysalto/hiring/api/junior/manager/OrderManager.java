@@ -11,9 +11,12 @@ public interface OrderManager {
     // Zadatak 2
     Order createOrder(CreateOrderRequest request);
 
-    // Zadatak 3: pregled svih narudzbi (lijepi oblik s imenom kupca, adresom, stavkama)
+    // Zadatak 3: pregled svih narudzbi
     List<OrderResponse> getAllOrders();
 
     // Zadatak 3: pregled jedne narudzbe po broju; null ako ne postoji
     OrderResponse getOrderByNr(Long orderNr);
+
+    // Zadatak 4: promjena statusa; null ako ne postoji, baca gresku ako je status neispravan
+    OrderResponse updateStatus(Long orderNr, String status);
 }
